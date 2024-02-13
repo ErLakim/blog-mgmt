@@ -1,6 +1,7 @@
 const UserModel = require("./user.model");
 const { hashPassword, comparePassword } = require("../../utils/bcrypt");
 const { mailer } = require("../../services/mailer");
+const { signJWT } = require("../../utils/token");
 
 const create = (payload) => {
   return UserModel.create(payload);
@@ -35,21 +36,21 @@ const register = async (payload) => {
 const login = async (payload) => {
   const { email, password } = payload;
   if (!email || !password) throw new Error("Email or password Missing!");
-  const user = await UserModel.findOne({ email });
+  const user = await UserModel.findOne({ email }).select("+password");
   if (!user) throw new Error("User Doesnot exist");
   const { password: hashPw } = user;
   const result = comparePassword(password, hashPw);
   // console.log ({result});
-  if (result === undefined) {
-    // Handle the case where comparePassword didn't return a valid result
-    throw new Error("Error comparing passwords");
-  }
+  // if (result === undefined) {
+  //   // Handle the case where comparePassword didn't return a valid result
+  //   throw new Error("Error comparing passwords");
+  // }
 
-  if (!result) {
-    throw new Error("Email or password mismatch");
-  }
+  if (!result) throw new Error("Email or password mismatch");
 
-  return "User logged In successfully";
+  const userPayload = { name: user.name, email: user.email, roles: user.roles };
+  const token = signJWT(userPayload);
+  return token;
 };
 
 // const resetPassword = async (payload) => {

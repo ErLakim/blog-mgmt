@@ -1,17 +1,18 @@
 const router = require("express").Router();
 const userController = require("./user.controller");
 // const { validate } = require("./user.validator");
+const { checkRole } = require("../../utils/sessionManager");
 
-router.get("/", async (req, res, next) => {
+router.get("/", checkRole(["admin"]), async (req, res, next) => {
   try {
-    const result = await userController.get;
+    const result = await userController.getAll();
     res.json({ data: result });
   } catch (err) {
     next(err);
   }
 });
 
-router.post("/", async (req, res, next) => {
+router.post("/", checkRole(["admin"]), async (req, res, next) => {
   try {
     const result = await userController.create(req.body);
     res.json({ data: result });
@@ -38,9 +39,6 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-
-
-
 // router.patch("/reset-password",checkRole(["admin"]),async(req,res,next)=>{
 //   try{
 //     const result = await userController.resetPassword(req.body);
@@ -50,7 +48,5 @@ router.post("/login", async (req, res, next) => {
 //   }
 
 // });
-
-
 
 module.exports = router;

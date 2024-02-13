@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT;
 const indexRouter = require("./routes/index");
 
-mongoose.connect("mongodb://localhost:27017/blog-mgmt").then(() => {
+mongoose.connect(process.env.DB).then(() => {
   console.log("Database Connected");
 });
 
