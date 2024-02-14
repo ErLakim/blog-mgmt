@@ -9,9 +9,10 @@ const signJWT = (payload) => {
   );
 };
 const verifyJWT = (token) => {
-    return JWT.verify(token,process.env.JWT_SECRET);
+  return JWT.verify(token, process.env.JWT_SECRET);
 };
 
-module.exports = { signJWT, verifyJWT };
-
-
+const generatesSixDigitToken = () => {
+  return Math.floor(100000 + Math.random() * 900000);
+};
+module.exports = { signJWT, verifyJWT, generatesSixDigitToken };

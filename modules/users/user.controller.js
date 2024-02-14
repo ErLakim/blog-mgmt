@@ -1,7 +1,8 @@
 const UserModel = require("./user.model");
 const { hashPassword, comparePassword } = require("../../utils/bcrypt");
 const { mailer } = require("../../services/mailer");
-const { signJWT } = require("../../utils/token");
+const { signJWT, generatesSixDigitToken } = require("../../utils/token");
+const userModel = require("./user.model");
 
 const create = (payload) => {
   return UserModel.create(payload);
@@ -29,7 +30,11 @@ const register = async (payload) => {
   payload.password = hashPassword(payload.password);
   const user = await UserModel.create(payload);
   if (!user) throw new Error("User registration fail.");
-  const mail = await mailer(user.email);
+  const mail = await mailer(
+    user.email,
+    "User Registration✔",
+    "User Registration Completed"
+  );
   if (mail) return "User Registration Completed";
 };
 
@@ -53,33 +58,71 @@ const login = async (payload) => {
   return token;
 };
 
-// const resetPassword = async (payload) => {
-//   const { userId, password } = payload;
-//   if (!userId || !password) throw new Error("User or password missing");
-//   const user = await userModel.findOne({ _id: userId });
-//   if (!user) throw new Error("User not found");
-//   await UserModel.updateOne(
-//     { _id: user._id },
-//     { password: hashPassword(password) }
-//   );
-//   return "Password reset succesfully.";
-// };
+const generateFPToken = async (payload) => {
+  const { email } = payload;
+  if (!email) throw new Error("Email not found.");
+  const user = await UserModel.findOne({ email });
+  if (!user) throw new Error("User doesnot exist");
 
-// const changePassword = async (payload) => {
-//   const { userId, oldPassword,newPassword } = payload;
+  const token = generatesSixDigitToken();
+  await UserModel.updateOne({ _id: user._id }, { token });
+  await mailer(email, "Forget Password Token", `Your reset Token is ${token}`);
+  return "Token is sent to email.";
+};
 
-// };
+const verifyFPToken = async (payload) => {
+  const { token, email, password } = payload;
+  if (!token || !email || !password) throw new Error("Something is missing");
+  const user = await UserModel.findOne({ email });
+  if (!user) throw new Error("User doesnot exist");
+  if (token !== user.token) throw new Error("Invalid Token");
+
+  // const newHashPw = hashPassword(password);
+  const updatedUser = await UserModel.updateOne(
+    { email },
+    { password: hashPassword(password), token: "" }
+  );
+  if (!updatedUser) throw new Error("Password update Failed");
+  return "Password changed sucessfully";
+};
+
+const resetPassword = async (payload) => {
+  const { userId, password } = payload;
+  if (!userId || !password) throw new Error("User or password missing");
+  const user = await userModel.findOne({ _id: userId });
+  if (!user) throw new Error("User not found");
+  await UserModel.updateOne(
+    { _id: user._id },
+    { password: hashPassword(password) }
+  );
+  return "Password reset succesfully.";
+};
+
+const changePassword = async (payload) => {
+  const { userId, oldPassword, newPassword } = payload;
+  if (!oldPassword || !newPassword || !userId)
+    throw new Error("Something is missing");
+  const user = await userModel.findOne({ _id: userId }).select("+password");
+  if (!user) throw new Error("User not found");
+  const isValidOldPw = comparePassword(oldPassword, user.password);
+  if (!isValidOldPw) throw new Error("Password didn't match");
+  await UserModel.updateOne(
+    { _id: user._id },
+    { password: hashPassword(newPassword) }
+  );
+  return "Password Changed Sucessfully";
+};
 
 const getProfile = (userId) => {
   return UserModel.findOne({ _id: userId });
 };
 
-// const updateProfile = async(userId, payload) => {
-//   const user= await UserModel.findOne({_id:userId});
-//   if(!user) throw new Error("User not Found.");
-//   await UserModel.updateOne({_id:user._id},payload);
-//   return"Profile Updated Sucessfuly.;"
-// };
+const updateProfile = async (userId, payload) => {
+  const user = await UserModel.findOne({ _id: userId });
+  if (!user) throw new Error("User not Found.");
+  await UserModel.updateOne({ _id: user._id }, payload);
+  return "Profile Updated Sucessfuly.;";
+};
 
 module.exports = {
   create,
@@ -89,8 +132,10 @@ module.exports = {
   deleteById,
   register,
   login,
+  generateFPToken,
+  verifyFPToken,
   getProfile,
-  // updateProfile,
-  // resetPassword,
-  // changePassword,
+  updateProfile,
+  resetPassword,
+  changePassword,
 };
