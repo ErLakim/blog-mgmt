@@ -13,6 +13,6 @@ const verifyJWT = (token) => {
 };
 
 const generatesSixDigitToken = () => {
-  return Math.floor(100000 + Math.random() * 900000);
+  return crypto.randomInt(100000,999999);
 };
 module.exports = { signJWT, verifyJWT, generatesSixDigitToken };
