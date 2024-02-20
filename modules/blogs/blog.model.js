@@ -8,8 +8,10 @@ const blogSchema = new Schema({
   author: { type: ObjectId,ref:"User", required:true },
   words: { type: Number, default: 0 },
   status: { type: String, enum: ["published", "draft"], default: "draft" },
-  createdAt: { type: Date, default: Date.now },
-  updateAt: { type: Date, default: Date.now },
-});
+},
+  // createdAt: { type: Date, default: Date.now },
+  // updateAt: { type: Date, default: Date.now },
+  { timestamps: true},
+);
 
 module.exports = new model("Blog", blogSchema);

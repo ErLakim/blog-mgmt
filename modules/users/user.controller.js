@@ -8,8 +8,60 @@ const create = (payload) => {
   return UserModel.create(payload);
 };
 
-const getAll = () => {
-  return UserModel.find();
+const list = async (search, page = 1, limit = 3) => {
+  const query = [];
+  if (search?.name) {
+    query.push({
+      $match: {
+        name: new RegExp(search.name, "gi"),
+      },
+    });
+  }
+  if (search?.role) {
+    query.push({
+      $match: {
+        roles: [search.role],
+      },
+    });
+  }
+  //sorting
+  query.push(
+    {
+      $facet: {
+        metadata: [
+          {
+            $count: "total",
+          },
+        ],
+        data: [
+          {
+            $skip: (+page - 1) * +limit,
+          },
+          {
+            $limit: +limit,
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        total: {
+          $arrayElemAt: ["", 0], // Corrected syntax here
+        },
+      },
+    },
+    {
+      $project: {
+        total: 1,
+        data: 1,
+      },
+    },
+    {
+      $project: {
+        "data.password": 0,
+      },
+    }
+  );
 };
 
 const getById = (_id) => {
@@ -126,7 +178,7 @@ const updateProfile = async (userId, payload) => {
 
 module.exports = {
   create,
-  getAll,
+  list,
   getById,
   updateById,
   deleteById,

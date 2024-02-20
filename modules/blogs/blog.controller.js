@@ -8,7 +8,7 @@ const create = (payload) => {
 };
 
 //read
-const getAll = () => {
+const list = (search, page = 1, limit = 10) => {
   return BlogModel.aggregate([
     {
       $lookup: {
@@ -40,6 +40,10 @@ const getAll = () => {
   ]);
 };
 
+const getPublishedOnly = (search, page = 1, limit = 10) => {
+  return BlogModel.find({ status: "published" });
+};
+
 const getById = (_id) => {
   return BlogModel.findOne({ _id });
 };
@@ -52,4 +56,11 @@ const deleteById = (_id) => {
   return BlogModel.deleteOne({ _id });
 };
 
-module.exports = { create, getAll, getById, updateById, deleteById };
+module.exports = {
+  create,
+  list,
+  getPublishedOnly,
+  getById,
+  updateById,
+  deleteById,
+};

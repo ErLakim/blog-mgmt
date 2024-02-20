@@ -4,7 +4,7 @@ const Schema = Joi.object({
   title: Joi.string().required(),
   tags: [Joi.string()],
   content: Joi.string(),
-  author: Joi.string(),
+  author: Joi.string().required(),
   words: Joi.number(),
   status: Joi.string(),
 });
