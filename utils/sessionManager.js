@@ -7,11 +7,11 @@ const checkRole = (sysRole) => {
     const { data } = verifyJWT(access_token);
     const isValidRole = sysRole.some((role) => data.roles.includes(role));
     if (!isValidRole) throw new Error("Permission Denied");
-    const {roles,email}=data;
-    const user =await userModel.findOne({email});
-    req.body.author= roles.includes("user")
-    ? user._id.toString()
-    :req.body.author;
+    const { roles, email } = data;
+    const user = await userModel.findOne({ email });
+    req.body.author = roles.includes("user")
+      ? user._id.toString()
+      : req.body.author;
     next();
   };
 };
