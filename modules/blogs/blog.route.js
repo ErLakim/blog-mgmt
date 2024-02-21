@@ -1,7 +1,25 @@
 const router = require("express").Router();
+const multer = require("multer");
 const BlogController = require("./blog.controller");
 const { checkRole } = require("../../utils/sessionManager");
 const { validate } = require("./blog.validator");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./public/images/blogs");
+  },
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.fieldname + "-" + Date.now() + "." + file.originalname.split(".")[1]
+    );
+  },
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { filesize: Number(process.env.MAX_FILE_SIZE) },
+});
 
 router.get("/", checkRole(["admin"]), async (req, res, next) => {
   try {
@@ -66,12 +84,17 @@ router.get("/slug/:slug", async (req, res, next) => {
 
 router.post(
   "/",
+  upload.single("image"),
   checkRole(["admin", "user"]),
   validate,
   async (req, res, next) => {
     try {
       //database call
       const data = req.body;
+      if (req.file) {
+        const { path } = req.file;
+        data.image = path.replace("public", "");
+      }
       const result = await BlogController.create(data);
       res.json({ data: result });
     } catch (err) {
